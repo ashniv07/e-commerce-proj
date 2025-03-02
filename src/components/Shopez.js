@@ -9,13 +9,29 @@ export default function Shopez() {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const response = await fetch("https://td1wgndh5m.execute-api.us-east-1.amazonaws.com/dev/fetch");
-        const data = await response.json();
-        setProducts(data);
+        const response = await fetch("https://ahic1patgh.execute-api.us-east-1.amazonaws.com/dev/fetch-prod");
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const rawData = await response.json();
+        
+        // ✅ Fix: Parse the JSON inside `body` if needed
+        const data = typeof rawData.body === "string" ? JSON.parse(rawData.body) : rawData;
+
+        if (Array.isArray(data)) {
+          setProducts(data);
+        } else {
+          console.error("API did not return an array", data);
+          setProducts([]);
+        }
       } catch (error) {
         console.error("Error fetching products:", error);
+        setProducts([]);
       }
     }
+
     fetchProducts();
   }, []);
 
@@ -26,14 +42,16 @@ export default function Shopez() {
     }
 
     try {
-      const response = await fetch("https://td1wgndh5m.execute-api.us-east-1.amazonaws.com/dev/fetch", {
+      const response = await fetch("https://ahic1patgh.execute-api.us-east-1.amazonaws.com/dev/fetch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newProduct),
       });
 
-      const data = await response.json();
-      if (response.ok) {
+      const rawData = await response.json();
+      const data = typeof rawData.body === "string" ? JSON.parse(rawData.body) : rawData;
+
+      if (response.ok && data) {
         setProducts([...products, data]);
         setNewProduct({ name: "", price: "", image: "", gender: "" });
       } else {
@@ -50,7 +68,7 @@ export default function Shopez() {
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            Shopez
+            ShopEz
           </Typography>
           <Button color="inherit">Login</Button>
         </Toolbar>
